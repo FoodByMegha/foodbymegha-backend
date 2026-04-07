@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/FoodByMegha/foodbymegha-backend/config"
+	"github.com/FoodByMegha/foodbymegha-backend/models"
 	"github.com/FoodByMegha/foodbymegha-backend/routes"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -19,6 +20,7 @@ func main() {
 
 	// Database connect karo
 	config.ConnectDB()
+	config.DB.AutoMigrate(&models.User{}, &models.Plan{}, &models.Subscription{})
 
 	// Gin router shuru karo
 	r := gin.Default()

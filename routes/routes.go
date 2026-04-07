@@ -22,5 +22,8 @@ func SetupRoutes(r *gin.Engine) {
 	protected.Use(middleware.AuthRequired())
 	{
 		protected.GET("/profile", handlers.GetProfile)
+		protected.GET("/plans", handlers.GetPlans)
+		protected.POST("/subscribe", handlers.Subscribe)
+		protected.GET("/my-plan", handlers.GetMyPlan)
 	}
 }
