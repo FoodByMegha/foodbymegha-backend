@@ -30,5 +30,9 @@ func SetupRoutes(r *gin.Engine) {
 		protected.GET("/orders", handlers.GetOrders)
 		protected.GET("/track/:id", handlers.TrackOrder)
 		protected.PUT("/orders/:id/status", handlers.UpdateOrderStatus)
+
+		protected.POST("/payment", handlers.CreatePayment)
+		protected.POST("/payment/verify", handlers.VerifyPayment)
+		protected.GET("/payment/history", handlers.GetPaymentHistory)
 	}
 }

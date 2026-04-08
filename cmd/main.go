@@ -20,7 +20,7 @@ func main() {
 
 	// Database connect karo
 	config.ConnectDB()
-	config.DB.AutoMigrate(&models.User{}, &models.Plan{}, &models.Subscription{}, &models.Order{})
+	config.DB.AutoMigrate(&models.User{}, &models.Plan{}, &models.Subscription{}, &models.Order{}, &models.Payment{})
 
 	// Gin router shuru karo
 	r := gin.Default()
