@@ -35,4 +35,12 @@ func SetupRoutes(r *gin.Engine) {
 		protected.POST("/payment/verify", handlers.VerifyPayment)
 		protected.GET("/payment/history", handlers.GetPaymentHistory)
 	}
+	
+	admin := api.Group("/admin")
+	admin.Use(middleware.AuthRequired(), middleware.AdminRequired())
+	{
+		admin.GET("/orders", handlers.GetAllOrders)
+		admin.POST("/menu", handlers.AddMenu)
+		admin.GET("/revenue", handlers.GetRevenue)
+	}
 }
