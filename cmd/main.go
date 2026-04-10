@@ -7,6 +7,7 @@ import (
 	"github.com/FoodByMegha/foodbymegha-backend/config"
 	"github.com/FoodByMegha/foodbymegha-backend/models"
 	"github.com/FoodByMegha/foodbymegha-backend/routes"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -24,6 +25,14 @@ func main() {
 
 	// Gin router shuru karo
 	r := gin.Default()
+
+	// ✨ CORS add karo
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}))
 
 	// Sab routes setup karo
 	routes.SetupRoutes(r)
