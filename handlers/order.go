@@ -88,6 +88,15 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
+	// ✅ Aaj ka order already hai?
+	today := time.Now().Format("2006-01-02")
+	var existingOrder models.Order
+	result = config.DB.Where("user_id = ? AND delivery_date = ?", userID, today).First(&existingOrder)
+	if result.Error == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Aaj ka order pehle se place ho gaya hai! 🍱"})
+		return
+	}
+
 	var input struct {
 		Address string `json:"address" binding:"required"`
 		Notes   string `json:"notes"`

@@ -33,6 +33,14 @@ func AddMenu(c *gin.Context) {
 		return
 	}
 
+	// ✅ Pehle check karo — same plan exist toh nahi karta?
+	var existing models.Plan
+	result := config.DB.Where("name = ? AND duration_days = ?", input.Name, input.DurationDays).First(&existing)
+	if result.Error == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Yeh plan pehle se exist karta hai!"})
+		return
+	}
+
 	plan := models.Plan{
 		Name:         input.Name,
 		Description:  input.Description,
