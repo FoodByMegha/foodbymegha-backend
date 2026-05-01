@@ -23,7 +23,6 @@ func SetupRoutes(r *gin.Engine) {
 	{
 		protected.GET("/profile", handlers.GetProfile)
 		protected.GET("/plans", handlers.GetPlans)
-		protected.POST("/subscribe", handlers.Subscribe)
 		protected.GET("/my-plan", handlers.GetMyPlan)
 
 		protected.POST("/orders", handlers.CreateOrder)
