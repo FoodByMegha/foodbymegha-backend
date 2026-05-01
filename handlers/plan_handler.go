@@ -76,6 +76,13 @@ func GetMyPlan(c *gin.Context) {
 		return
 	}
 
+	// ✅ Auto-expire check
+	if time.Now().After(subscription.EndDate) {
+		config.DB.Model(&subscription).Update("is_active", false)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Tera plan khatam ho gaya! Naya plan lo 🍱"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"my_plan": subscription,
 	})
