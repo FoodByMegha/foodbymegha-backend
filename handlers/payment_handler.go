@@ -4,8 +4,10 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/FoodByMegha/foodbymegha-backend/config"
 	"github.com/FoodByMegha/foodbymegha-backend/models"
@@ -18,17 +20,25 @@ func CreatePayment(c *gin.Context) {
 	userID, _ := c.Get("userID")
 
 	var input struct {
-		OrderID uint `json:"order_id" binding:"required"`
+		PlanID uint `json:"plan_id" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Order ID dena zaroori hai"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Plan ID dena zaroori hai"})
 		return
 	}
 
-	// Order exist karta hai?
-	var order models.Order
-	if err := config.DB.First(&order, input.OrderID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Order nahi mila"})
+	// Plan exist karta hai?
+	var plan models.Plan
+	if err := config.DB.First(&plan, input.PlanID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Plan nahi mila"})
+		return
+	}
+
+	// Pehle se active subscription hai?
+	var existing models.Subscription
+	result := config.DB.Where("user_id = ? AND is_active = ?", userID, true).First(&existing)
+	if result.Error == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Tumhara plan pehle se active hai!"})
 		return
 	}
 
@@ -38,13 +48,15 @@ func CreatePayment(c *gin.Context) {
 		os.Getenv("RAZORPAY_KEY_SECRET"),
 	)
 
-	// Razorpay pe order banao
-	// Amount paisa mein hota hai — ₹3999 = 399900 paisa
+	// Amount paisa mein — ₹999 = 99900 paisa
+	amountInPaise := int64(plan.Price * 100)
+
 	data := map[string]interface{}{
-		"amount":   399900,
+		"amount":   amountInPaise,
 		"currency": "INR",
-		"receipt":  "receipt_order_" + string(rune(input.OrderID)),
+		"receipt":  fmt.Sprintf("receipt_plan_%d_user_%d", plan.ID, userID),
 	}
+
 	rzpOrder, err := client.Order.Create(data, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Razorpay order nahi bana"})
@@ -54,25 +66,27 @@ func CreatePayment(c *gin.Context) {
 	// Payment record DB mein save karo
 	payment := models.Payment{
 		UserID:          userID.(uint),
-		OrderID:         input.OrderID,
+		PlanID:          plan.ID,
 		RazorpayOrderID: rzpOrder["id"].(string),
-		Amount:          3999.00,
+		Amount:          plan.Price,
 		Currency:        "INR",
 		Status:          "created",
 	}
 	config.DB.Create(&payment)
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":           "Payment order bana! Ab pay karo 💳",
 		"razorpay_order_id": rzpOrder["id"],
-		"amount":            399900,
+		"amount":            amountInPaise,
 		"currency":          "INR",
 		"key_id":            os.Getenv("RAZORPAY_KEY_ID"),
+		"plan_name":         plan.Name,
 	})
 }
 
-// POST /payment/verify — Payment verify karo
+// POST /payment/verify — Payment verify karo aur subscription activate karo
 func VerifyPayment(c *gin.Context) {
+	userID, _ := c.Get("userID")
+
 	var input struct {
 		RazorpayOrderID   string `json:"razorpay_order_id" binding:"required"`
 		RazorpayPaymentID string `json:"razorpay_payment_id" binding:"required"`
@@ -83,7 +97,7 @@ func VerifyPayment(c *gin.Context) {
 		return
 	}
 
-	// Signature verify karo — ye security check hai
+	// Signature verify karo
 	secret := os.Getenv("RAZORPAY_KEY_SECRET")
 	data := input.RazorpayOrderID + "|" + input.RazorpayPaymentID
 	h := hmac.New(sha256.New, []byte(secret))
@@ -91,11 +105,11 @@ func VerifyPayment(c *gin.Context) {
 	generatedSignature := hex.EncodeToString(h.Sum(nil))
 
 	if generatedSignature != input.RazorpaySignature {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Payment verify nahi hui — fraud ho sakta hai!"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Payment verify nahi hui!"})
 		return
 	}
 
-	// DB mein payment update karo
+	// Payment DB mein update karo
 	var payment models.Payment
 	config.DB.Where("razorpay_order_id = ?", input.RazorpayOrderID).First(&payment)
 	config.DB.Model(&payment).Updates(map[string]interface{}{
@@ -103,17 +117,31 @@ func VerifyPayment(c *gin.Context) {
 		"status":              "paid",
 	})
 
+	// ✅ Subscription activate karo
+	var plan models.Plan
+	config.DB.First(&plan, payment.PlanID)
+
+	now := time.Now()
+	subscription := models.Subscription{
+		UserID:    userID.(uint),
+		PlanID:    payment.PlanID,
+		StartDate: now,
+		EndDate:   now.AddDate(0, 0, plan.DurationDays),
+		IsActive:  true,
+	}
+	config.DB.Create(&subscription)
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Payment successful! Tiffin pakka! 🎉",
+		"message": "Payment successful! Subscription active ho gaya! 🎉",
 	})
 }
 
-// GET /payment/history — payment history dekho
+// GET /payment/history
 func GetPaymentHistory(c *gin.Context) {
 	userID, _ := c.Get("userID")
 
 	var payments []models.Payment
-	config.DB.Where("user_id = ?", userID).Find(&payments)
+	config.DB.Preload("Plan").Where("user_id = ?", userID).Find(&payments)
 
 	c.JSON(http.StatusOK, gin.H{
 		"payments": payments,
