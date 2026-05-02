@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"github.com/FoodByMegha/foodbymegha-backend/config"
@@ -14,10 +13,7 @@ import (
 
 func main() {
 	// .env file load karo
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	godotenv.Load() // Error ignore karo — Render pe .env nahi hoti
 
 	// Database connect karo
 	config.ConnectDB()
