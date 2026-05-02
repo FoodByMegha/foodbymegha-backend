@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/FoodByMegha/foodbymegha-backend/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -30,12 +29,6 @@ func ConnectDB() {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Database se connect nahi ho paya!", err)
-	}
-
-	// Automatically tables banao
-	err = db.AutoMigrate(&models.User{})
-	if err != nil {
-		log.Fatal("AutoMigrate fail ho gaya!", err)
 	}
 
 	DB = db
