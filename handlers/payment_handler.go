@@ -11,6 +11,7 @@ import (
 
 	"github.com/FoodByMegha/foodbymegha-backend/config"
 	"github.com/FoodByMegha/foodbymegha-backend/models"
+	"github.com/FoodByMegha/foodbymegha-backend/utils"
 	"github.com/gin-gonic/gin"
 	razorpay "github.com/razorpay/razorpay-go"
 )
@@ -130,6 +131,15 @@ func VerifyPayment(c *gin.Context) {
 		IsActive:  true,
 	}
 	config.DB.Create(&subscription)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Payment successful! Subscription active ho gaya! 🎉",
+	})
+
+	// ✅ Email bhejo
+	var user models.User
+	config.DB.First(&user, userID)
+	go utils.PaymentSuccessEmail(user.Email, user.Name, plan.Name, payment.Amount)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Payment successful! Subscription active ho gaya! 🎉",
