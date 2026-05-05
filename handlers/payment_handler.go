@@ -132,15 +132,12 @@ func VerifyPayment(c *gin.Context) {
 	}
 	config.DB.Create(&subscription)
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Payment successful! Subscription active ho gaya! 🎉",
-	})
-
 	// ✅ Email bhejo
 	var user models.User
 	config.DB.First(&user, userID)
 	go utils.PaymentSuccessEmail(user.Email, user.Name, plan.Name, payment.Amount)
 
+	// ✅ Sirf ek response
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Payment successful! Subscription active ho gaya! 🎉",
 	})
