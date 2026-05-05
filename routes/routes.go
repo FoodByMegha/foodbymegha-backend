@@ -7,17 +7,14 @@ import (
 )
 
 func SetupRoutes(r *gin.Engine) {
-	// API version 1
 	api := r.Group("/api/v1")
 
-	// Public routes — koi bhi access kar sakta hai
 	auth := api.Group("/auth")
 	{
 		auth.POST("/register", handlers.Register)
 		auth.POST("/login", handlers.Login)
 	}
 
-	// Protected routes — sirf logged in customer
 	protected := api.Group("/")
 	protected.Use(middleware.AuthRequired())
 	{
@@ -28,6 +25,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.POST("/orders", handlers.CreateOrder)
 		protected.GET("/orders", handlers.GetOrders)
 		protected.GET("/track/:id", handlers.TrackOrder)
+		protected.PATCH("/orders/:id/note", handlers.UpdateOrderNote) // ✅ Naya
 
 		protected.POST("/payment", handlers.CreatePayment)
 		protected.POST("/payment/verify", handlers.VerifyPayment)

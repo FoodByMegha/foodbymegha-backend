@@ -121,3 +121,40 @@ func CreateOrder(c *gin.Context) {
 		"order":   order,
 	})
 }
+
+// PATCH /orders/:id/note — customer note update kare (10 baje tak)
+func UpdateOrderNote(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	orderID := c.Param("id")
+
+	// ⏰ 10 baje ke baad update band
+	now := time.Now()
+	cutoff := time.Date(now.Year(), now.Month(), now.Day(), 10, 0, 0, 0, now.Location())
+	if now.After(cutoff) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Note update ki deadline ho gayi! Subah 10 baje tak hi update kar sakte hain 🕙",
+		})
+		return
+	}
+
+	var input struct {
+		Notes string `json:"notes"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	var order models.Order
+	result := config.DB.Where("id = ? AND user_id = ?", orderID, userID).First(&order)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Order nahi mila"})
+		return
+	}
+
+	config.DB.Model(&order).Update("notes", input.Notes)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Note update ho gaya! ✅",
+		"order":   order,
+	})
+}

@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/FoodByMegha/foodbymegha-backend/config"
+	"github.com/FoodByMegha/foodbymegha-backend/cron"
 	"github.com/FoodByMegha/foodbymegha-backend/models"
 	"github.com/FoodByMegha/foodbymegha-backend/routes"
 	"github.com/gin-contrib/cors"
@@ -12,43 +13,37 @@ import (
 )
 
 func main() {
-	// .env file load karo
-	godotenv.Load() // Error ignore karo — Render pe .env nahi hoti
+	godotenv.Load()
 
-	// Database connect karo
 	config.ConnectDB()
 	config.DB.AutoMigrate(&models.User{}, &models.Plan{}, &models.Subscription{}, &models.Order{}, &models.Payment{})
 
-	// Gin router shuru karo
 	r := gin.Default()
 
-	// ✨ CORS add karo
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
 			"http://localhost:5173",
-			"https://foodbymegha-frontend.vercel.app", // ✅ Add karo
+			"https://foodbymegha-frontend.vercel.app",
 		},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE"}, // ✅ PATCH add hua
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
 
-	// Sab routes setup karo
 	routes.SetupRoutes(r)
 
-	// Health check
+	cron.StartCronJobs() // ✅ Cron job shuru
+
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "FoodByMegha backend is live! 🍱",
 		})
 	})
 
-	// Port lo .env se
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	// Server start karo
 	r.Run(":" + port)
 }
