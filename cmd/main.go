@@ -24,7 +24,7 @@ func main() {
 			"http://localhost:5173",
 			"https://foodbymegha-frontend.vercel.app",
 		},
-		//AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE"}, // ✅ PATCH add hua
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE"}, // ✅ PATCH add hua
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
