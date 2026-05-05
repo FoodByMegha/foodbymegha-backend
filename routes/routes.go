@@ -25,7 +25,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.POST("/orders", handlers.CreateOrder)
 		protected.GET("/orders", handlers.GetOrders)
 		protected.GET("/track/:id", handlers.TrackOrder)
-		protected.PATCH("/orders/:id/note", handlers.UpdateOrderNote) // ✅ Naya
+		// protected.PATCH("/orders/:id/note", handlers.UpdateOrderNote) // ✅ Naya
 
 		protected.POST("/payment", handlers.CreatePayment)
 		protected.POST("/payment/verify", handlers.VerifyPayment)

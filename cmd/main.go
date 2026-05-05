@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/FoodByMegha/foodbymegha-backend/config"
-	"github.com/FoodByMegha/foodbymegha-backend/cron"
 	"github.com/FoodByMegha/foodbymegha-backend/models"
 	"github.com/FoodByMegha/foodbymegha-backend/routes"
 	"github.com/gin-contrib/cors"
@@ -32,7 +31,7 @@ func main() {
 
 	routes.SetupRoutes(r)
 
-	cron.StartCronJobs() // ✅ Cron job shuru
+	// cron.StartCronJobs() // ✅ Cron job shuru
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
