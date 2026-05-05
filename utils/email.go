@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"net/smtp"
 	"os"
 )
@@ -15,11 +16,13 @@ func SendEmail(to, subject, body string) error {
 	msg := fmt.Sprintf("From: FoodByMegha <%s>\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n%s", from, to, subject, body)
 
 	err := smtp.SendMail("smtp.gmail.com:587", auth, from, []string{to}, []byte(msg))
+	if err != nil {
+		log.Println("❌ Email send failed:", err) // ← Naya
+	}
 	return err
 }
 
 func PaymentSuccessEmail(customerEmail, customerName, planName string, amount float64) {
-	// Customer ko email
 	customerBody := fmt.Sprintf(`
 		<h2>🍱 FoodByMegha</h2>
 		<p>Namaste <strong>%s</strong>!</p>
@@ -34,7 +37,6 @@ func PaymentSuccessEmail(customerEmail, customerName, planName string, amount fl
 
 	SendEmail(customerEmail, "Payment Successful! Tiffin Pakka! 🍱", customerBody)
 
-	// Admin ko email
 	adminBody := fmt.Sprintf(`
 		<h2>💰 Naya Customer!</h2>
 		<p>Customer: <strong>%s</strong></p>
